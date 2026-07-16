@@ -92,6 +92,10 @@ void Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
         perror("sethostname");
     if (mount(nullptr, "/", nullptr, MS_REC | MS_PRIVATE, nullptr) == -1)
         perror("mount");
+
+    system("findmnt -o TARGET,PROPAGATION");
+
+    pause();
 }
 
 void Sandbox::setupFilesystem()
