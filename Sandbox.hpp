@@ -17,6 +17,8 @@ typedef struct t_NamespaceConfig
     bool user;
     bool cgroup;
 } t_NamespaceConfig;
+
+#define MOUNT_FILE "/tmp/sandbox_mount"
 class Sandbox
 {
 public:

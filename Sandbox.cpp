@@ -90,7 +90,7 @@ void Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
     }
     if (sethostname(hostname.c_str(), hostname.length()) == -1)
         perror("sethostname");
-    if (mount(nullptr, "/", nullptr, MS_REC | MS_PRIVATE, nullptr) == -1)
+    if (mount("tmpfs", MOUNT_FILE, "tmpfs", 0, nullptr) == -1)
         perror("mount");
 
     system("findmnt -o TARGET,PROPAGATION");
