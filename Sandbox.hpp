@@ -29,7 +29,7 @@ private:
 
 
     void createCgroup(std::string cpuLimit, std::string memoryLimit);
-    void setupNamespaces(t_NamespaceConfig config);
+    void setupNamespaces(t_NamespaceConfig config, std::string hostname);
 
     void setupFilesystem();
 
