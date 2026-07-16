@@ -19,7 +19,7 @@ typedef struct t_NamespaceConfig
 class Sandbox
 {
 public:
-    void run(std::string cpuLimit, std::string memoryLimit);
+    void run(std::string cpuLimit, std::string memoryLimit, std::string hostname);
     Sandbox();
     ~Sandbox();
     Sandbox (const Sandbox &other);

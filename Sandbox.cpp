@@ -45,7 +45,7 @@ void Sandbox::createCgroup(std::string cpuLimit, std::string memoryLimit)
     cpu << cpuLimit;
 }
 
-void Sandbox::setupNamespaces(t_NamespaceConfig config)
+void Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
 {
     // to setup namespaces, we will use the unshare system call
     // unshare(CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWPID | CLONE_NEWNET | CLONE_NEWUSER);
@@ -88,8 +88,9 @@ void Sandbox::setupNamespaces(t_NamespaceConfig config)
     {
         throw std::runtime_error("Failed to unshare namespaces.");
     }
-    if (sethostname("sandbox", 7) == -1)
+    if (sethostname(hostname.c_str(), hostname.length()) == -1)
         perror("sethostname");
+    mount(nullptr, "/", nullptr, MS_REC | MS_PRIVATE, nullptr);
 }
 
 void Sandbox::setupFilesystem()
@@ -166,15 +167,24 @@ static void printMetadata()
     std::cout << "Namespaces: mount pid net uts ipc user cgroup" << '\n';
 }
 
-void Sandbox::run(std::string cpuLimit, std::string memoryLimit)
+void Sandbox::run(std::string cpuLimit, std::string memoryLimit, std::string hostname)
 {
     try
     {
         printMetadata();
         createCgroup(cpuLimit, memoryLimit);
-        t_NamespaceConfig nsConfig = {true, true, true, true, false, false, false};
-        // later we will use the nsConfig to determine which namespaces to setup, but for now, we will just setup all of them.
-        setupNamespaces(nsConfig);
+        t_NamespaceConfig nsConfig = 
+        {// explaination of every flag : 
+            true,  // mount: create a new mount namespace
+            true,  // pid: create a new PID namespace
+            true,  // net: create a new network namespace
+            true,  // uts: create a new UTS namespace
+            false, // ipc: create a new IPC namespace
+            false, // user: create a new user namespace
+            false  // cgroup: create a new cgroup namespace
+    };
+
+        setupNamespaces(nsConfig, hostname);
         // setupFilesystem();
         // setupNetwork();
         // setupHostname();
