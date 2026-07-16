@@ -93,9 +93,9 @@ void Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
     if (mount("tmpfs", MOUNT_FILE, "tmpfs", 0, nullptr) == -1)
         perror("mount");
 
-    system("findmnt -o TARGET,PROPAGATION");
+    // system("findmnt -o TARGET,PROPAGATION");
 
-    pause();
+    // pause();
 }
 
 void Sandbox::setupFilesystem()
