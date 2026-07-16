@@ -88,6 +88,8 @@ void Sandbox::setupNamespaces(t_NamespaceConfig config)
     {
         throw std::runtime_error("Failed to unshare namespaces.");
     }
+    if (sethostname("sandbox", 7) == -1)
+        perror("sethostname");
 }
 
 void Sandbox::setupFilesystem()
