@@ -163,22 +163,14 @@ void Sandbox::cleanup()
                       << errorCode.message() << std::endl;
         }
         else
-        {
             std::cout << "Cgroup directory removed successfully." << std::endl;
-        }
     }
     else
-    {
         std::cerr << "Cgroup directory does not exist." << std::endl;
-    }
     if (umount(MOUNT_FILE) == -1)
-    {
         perror("umount");
-    }
     if (rmdir(MOUNT_FILE) == -1)
-    {
         perror("rmdir");
-    }
 }
 
 
@@ -202,7 +194,7 @@ static void printMetadata()
 
 void Sandbox::run(std::string cpuLimit, std::string memoryLimit, std::string hostname)
 {
-    pit_t pid = fork();
+    int pid = fork();
     if (pid == -1)
     {
         throw std::runtime_error("Failed to fork process.");
