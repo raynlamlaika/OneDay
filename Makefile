@@ -6,12 +6,11 @@ CXX=c++
 FLAGS=-std=c++20 -Wall -Wextra -Werror -g
 HEADER=OneDay.hpp Sandbox.hpp
 
-create:
+
+
+all: $(NAME) 
 	mkdir -p /tmp/sandbox_mount
-
-all: $(NAME) create
-
-$(NAME): $(OBJS)
+$(NAME): $(OBJS) 
 	$(CXX) $(FLAGS) -o $(NAME) $(OBJS)
 
 
