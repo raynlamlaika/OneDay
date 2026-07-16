@@ -16,12 +16,9 @@ Sandbox::Sandbox(const Sandbox &other)
 
 Sandbox &Sandbox::operator=(const Sandbox &other)
 {
-    if (this != &other)
-    {
-        // Copy any necessary member variables here
-        *this = other;
-    }
+    (void)other;
     return *this;
+
 }
 
 
@@ -100,6 +97,25 @@ void Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
 
 void Sandbox::setupFilesystem()
 {
+    namespace fs = std::filesystem;
+ 
+    if (!fs::exists(ROOTFS_PATH) || !fs::is_directory(ROOTFS_PATH))
+        throw std::runtime_error("Rootfs directory does not exist: " ROOTFS_PATH);
+ 
+    // chdir BEFORE chroot: chroot() alone only changes what "/" resolves to,
+    // it does not move the process's cwd. If we chroot'd without first
+    // being inside ROOTFS_PATH, a process could still reach outside the
+    // jail via relative paths (the classic chroot escape).
+    if (chdir(ROOTFS_PATH) == -1)
+        throw std::runtime_error("chdir to rootfs failed: " + std::string(strerror(errno)));
+ 
+    if (chroot(".") == -1)
+        throw std::runtime_error("chroot failed: " + std::string(strerror(errno)));
+ 
+    // Re-anchor cwd to the new root so relative paths behave as expected
+    // for whatever runs next (e.g. execve).
+    if (chdir("/") == -1)
+        throw std::runtime_error("chdir to / after chroot failed: " + std::string(strerror(errno)));
 }
 
 void Sandbox::setupNetwork()
@@ -179,33 +195,49 @@ static void printMetadata()
 
 void Sandbox::run(std::string cpuLimit, std::string memoryLimit, std::string hostname)
 {
-    try
+    pit_t pid = fork();
+    if (pid == -1)
     {
-        printMetadata();
-        createCgroup(cpuLimit, memoryLimit);
-        t_NamespaceConfig nsConfig = 
-        {// explaination of every flag : 
-            true,  // mount: create a new mount namespace
-            true,  // pid: create a new PID namespace
-            true,  // net: create a new network namespace
-            true,  // uts: create a new UTS namespace
-            false, // ipc: create a new IPC namespace
-            false, // user: create a new user namespace
-            false  // cgroup: create a new cgroup namespace
-    };
-
-        setupNamespaces(nsConfig, hostname);
-        // setupFilesystem();
-        // setupNetwork();
-        // setupHostname();
-        // setupSecurity();
-        // executeProgram();
-        printMetadata();
-        cleanup();
-
+        throw std::runtime_error("Failed to fork process.");
     }
-    catch (const std::exception &e)
+    else if (pid == 0)
     {
-        std::cerr << "Error: " << e.what() << std::endl;
+        // Child process
+        try
+        {
+            printMetadata();
+            createCgroup(cpuLimit, memoryLimit);
+            t_NamespaceConfig nsConfig = 
+            {// explaination of every flag : 
+                true,  // mount: create a new mount namespace
+                true,  // pid: create a new PID namespace
+                true,  // net: create a new network namespace
+                true,  // uts: create a new UTS namespace
+                false, // ipc: create a new IPC namespace
+                false, // user: create a new user namespace
+                false  // cgroup: create a new cgroup namespace
+        };
+
+            setupNamespaces(nsConfig, hostname);
+            setupFilesystem();
+            // setupNetwork();
+            // setupHostname();
+            // setupSecurity();
+            // executeProgram();
+            printMetadata();
+            cleanup();
+
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error: " << e.what() << std::endl;
+            _exit(0);
+        }
+    }
+    else
+    {
+        // Parent process
+        int status;
+        waitpid(pid, &status, 0);
     }
 }

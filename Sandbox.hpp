@@ -6,6 +6,9 @@
 #include <iostream>
 #include <unistd.h>
 #include <sys/mount.h>
+#include <sched.h>     // CLONE_* flags
+#include <sys/wait.h>  // waitpid, pid_t
+
 
 typedef struct t_NamespaceConfig
 {
@@ -19,6 +22,8 @@ typedef struct t_NamespaceConfig
 } t_NamespaceConfig;
 
 #define MOUNT_FILE "/tmp/sandbox_mount"
+#define ROOTFS_PATH "/tmp/sandbox_rootfs"
+
 class Sandbox
 {
 public:
