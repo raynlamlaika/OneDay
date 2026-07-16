@@ -4,8 +4,18 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <unistd.h>
 
-
+typedef struct t_NamespaceConfig
+{
+    bool mount;
+    bool pid;
+    bool network;
+    bool uts;
+    bool ipc;
+    bool user;
+    bool cgroup;
+} t_NamespaceConfig;
 class Sandbox
 {
 public:
@@ -18,10 +28,8 @@ public:
 private:
 
 
-
     void createCgroup(std::string cpuLimit, std::string memoryLimit);
-
-    void setupNamespaces();
+    void setupNamespaces(t_NamespaceConfig config);
 
     void setupFilesystem();
 
