@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <unistd.h>
+#include <sys/mount.h>
 
 typedef struct t_NamespaceConfig
 {
