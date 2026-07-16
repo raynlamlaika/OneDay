@@ -90,7 +90,8 @@ void Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
     }
     if (sethostname(hostname.c_str(), hostname.length()) == -1)
         perror("sethostname");
-    mount(nullptr, "/", nullptr, MS_REC | MS_PRIVATE, nullptr);
+    if (mount(nullptr, "/", nullptr, MS_REC | MS_PRIVATE, nullptr) == -1)
+        perror("mount");
 }
 
 void Sandbox::setupFilesystem()
