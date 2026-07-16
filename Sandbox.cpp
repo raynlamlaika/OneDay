@@ -84,7 +84,7 @@ void Sandbox::setupNamespaces(t_NamespaceConfig config)
         flags |= CLONE_NEWCGROUP;
     
 
-    if (unshare(flags) == -1)
+    if (unshare(flags) == -1)// unshare it will create a new namespace for the current process and its children.
     {
         throw std::runtime_error("Failed to unshare namespaces.");
     }
@@ -178,7 +178,9 @@ void Sandbox::run(std::string cpuLimit, std::string memoryLimit)
         // setupHostname();
         // setupSecurity();
         // executeProgram();
+        printMetadata();
         cleanup();
+
     }
     catch (const std::exception &e)
     {
