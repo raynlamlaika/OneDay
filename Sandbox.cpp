@@ -109,7 +109,7 @@ void Sandbox::setupFilesystem()
     if (chdir(ROOTFS_PATH) == -1)
         throw std::runtime_error("chdir to rootfs failed: " + std::string(strerror(errno)));
  
-    if (chroot(".") == -1)
+    if (chroot(".") == -1)// chroot for changing the root directory of the current process to the specified path. After a successful call to chroot, the process will see the specified directory as its root directory ("/"). This is often used for creating isolated environments, such as sandboxes or containers, where the process is restricted to a specific portion of the filesystem.
         throw std::runtime_error("chroot failed: " + std::string(strerror(errno)));
  
     // Re-anchor cwd to the new root so relative paths behave as expected
@@ -120,6 +120,13 @@ void Sandbox::setupFilesystem()
 
 void Sandbox::setupNetwork()
 {
+    // We are already inside a new network namespace.
+
+    // 1. Bring up loopback.
+    system("ip link set lo up");
+
+    // 2. Print interfaces.
+    system("ip link");
 }
 
 void Sandbox::setupHostname()
@@ -173,7 +180,7 @@ void Sandbox::cleanup()
         perror("rmdir");
     }
 }
-#include <unistd.h>
+
 
 static std::string getHostname()
 {
