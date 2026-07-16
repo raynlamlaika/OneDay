@@ -120,9 +120,6 @@ void Sandbox::executeProgram()
 
 void Sandbox::cleanup()
 {
-
-    std::cout << "UID  : " << getuid() << '\n';
-    std::cout << "EUID : " << geteuid() << '\n';
     // the clean up here is to remove the cgroup directory
     namespace fs = std::filesystem;
     fs::path cgroupPath = "/sys/fs/cgroup/sandbox";
@@ -150,6 +147,14 @@ void Sandbox::cleanup()
     else
     {
         std::cerr << "Cgroup directory does not exist." << std::endl;
+    }
+    if (umount(MOUNT_FILE) == -1)
+    {
+        perror("umount");
+    }
+    if (rmdir(MOUNT_FILE) == -1)
+    {
+        perror("rmdir");
     }
 }
 #include <unistd.h>
