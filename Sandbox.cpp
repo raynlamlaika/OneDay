@@ -66,7 +66,6 @@ void Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
 
     if (config.mount)
         flags |= CLONE_NEWNS;
-    
     if (config.uts)
         flags |= CLONE_NEWUTS;
     if (config.network)
@@ -94,7 +93,7 @@ void Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
 
     // pause();
 }
-
+#include <cstring>
 void Sandbox::setupFilesystem()
 {
     namespace fs = std::filesystem;
@@ -192,46 +191,71 @@ static void printMetadata()
     std::cout << "Namespaces: mount pid net uts ipc user cgroup" << '\n';
 }
 
+int Sandbox::child(void *arg)
+{
+    Sandbox *sandbox = static_cast<Sandbox *>(arg);
+
+    std::cout << "Child process started." << std::endl;
+    (void) sandbox; // Suppress unused variable warning
+
+    // Now you can access members
+    // sandbox->setupFilesystem();
+    // sandbox->setupNetwork();
+
+    return 0;
+}
 void Sandbox::run(std::string cpuLimit, std::string memoryLimit, std::string hostname)
 {
-    int pid = fork();
+    constexpr int STACK_SIZE = 1024 * 1024;
+    char *stack = new char[STACK_SIZE];
+    int flags = CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWNET | CLONE_NEWIPC | CLONE_NEWPID | SIGCHLD;
+    pid_t pid = clone(
+        Sandbox::child,
+        stack + STACK_SIZE,
+        flags,
+        this);
+    (void)cpuLimit; // Suppress unused variable warning
+    (void)memoryLimit; // Suppress unused variable warning
+    (void)hostname; // Suppress unused variable warning
     if (pid == -1)
     {
-        throw std::runtime_error("Failed to fork process.");
+        std::cerr << "clone() failed: " << strerror(errno) << std::endl;
+        throw std::runtime_error("clone failed");
     }
     else if (pid == 0)
     {
-        // Child process
-        try
-        {
+        // // Child process
+        // try
+        // {
             printMetadata();
-            createCgroup(cpuLimit, memoryLimit);
-            t_NamespaceConfig nsConfig = 
-            {// explaination of every flag : 
-                true,  // mount: create a new mount namespace
-                true,  // pid: create a new PID namespace
-                true,  // net: create a new network namespace
-                true,  // uts: create a new UTS namespace
-                false, // ipc: create a new IPC namespace
-                false, // user: create a new user namespace
-                false  // cgroup: create a new cgroup namespace
-        };
+        //     createCgroup(cpuLimit, memoryLimit);
+        //     t_NamespaceConfig nsConfig = 
+        //     {// explaination of every flag : 
+        //         true,  // mount: create a new mount namespace
+        //         true,  // pid: create a new PID namespace
+        //         true,  // net: create a new network namespace
+        //         true,  // uts: create a new UTS namespace
+        //         false, // ipc: create a new IPC namespace
+        //         false, // user: create a new user namespace
+        //         false  // cgroup: create a new cgroup namespace
+        // };
 
-            setupNamespaces(nsConfig, hostname);
-            setupFilesystem();
-            // setupNetwork();
-            // setupHostname();
-            // setupSecurity();
-            // executeProgram();
-            printMetadata();
-            cleanup();
+        //     setupNamespaces(nsConfig, hostname);
+        //     setupFilesystem();
+        //     // setupNetwork();
+        //     // setupHostname();
+        //     // setupSecurity();
+        //     // executeProgram();
+        //     printMetadata();
+        //     cleanup();
 
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "Error: " << e.what() << std::endl;
-            _exit(0);
-        }
+        // }
+        // catch (const std::exception &e)
+        // {
+        //     std::cerr << "Error: " << e.what() << std::endl;
+        //     _exit(0);
+        // }
+        std::cout << "Child process running in sandboxed environment." << std::endl;
     }
     else
     {

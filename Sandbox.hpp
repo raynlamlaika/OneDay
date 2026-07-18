@@ -9,7 +9,10 @@
 #include <sched.h>     // CLONE_* flags
 #include <sys/wait.h>  // waitpid, pid_t
 #include <unistd.h>
-
+#include <iostream>
+#include <sched.h>
+#include <unistd.h>
+#include <sys/wait.h>
 typedef struct t_NamespaceConfig
 {
     bool mount;
@@ -32,6 +35,8 @@ public:
     ~Sandbox();
     Sandbox (const Sandbox &other);
     Sandbox &operator=(const Sandbox &other);
+
+   static int child(void *arg);
 
 private:
 

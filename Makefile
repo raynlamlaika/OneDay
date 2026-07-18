@@ -1,5 +1,5 @@
 NAME=OneDay
-FILES=main.cpp OneDay.cpp Sandbox.cpp
+FILES=main.cpp OneDay.cpp Sandbox.cpp Pro_child.cpp
 
 OBJS=$(FILES:.cpp=.o)
 CXX=c++
