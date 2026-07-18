@@ -79,8 +79,6 @@ bool Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
         flags |= CLONE_NEWNS;
     if (config.uts)
         flags |= CLONE_NEWUTS;
-    if (config.network)
-        flags |= CLONE_NEWNET;
     if (config.ipc)
         flags |= CLONE_NEWIPC;
     // if (config.pid)
@@ -283,7 +281,7 @@ int Sandbox::child(void *arg)
     {// explaination of every flag : 
         true,  // mount: create a new mount namespace
         true,  // pid: create a new PID namespace
-        true,  // net: create a new network namespace
+        false, // net: use the VM's existing network namespace so DNS and outbound traffic work
         true,  // uts: create a new UTS namespace
         false, // ipc: create a new IPC namespace
         false, // user: create a new user namespace
@@ -311,7 +309,7 @@ void Sandbox::run(std::string cpuLimit, std::string memoryLimit, std::string hos
 {
     constexpr int STACK_SIZE = 10024 * 1024;
     char *stack = new char[STACK_SIZE];
-    int flags = CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWNET | CLONE_NEWIPC | CLONE_NEWPID | SIGCHLD;
+    int flags = CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWPID | SIGCHLD;
     pid_t pid = clone( Sandbox::child, stack + STACK_SIZE, flags, this);
     if (pid == -1)
     {
