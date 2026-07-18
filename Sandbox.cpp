@@ -261,4 +261,5 @@ void Sandbox::run(std::string cpuLimit, std::string memoryLimit, std::string hos
 
     int status;
     waitpid(pid, &status, 0);
+    cleanup();
 }
