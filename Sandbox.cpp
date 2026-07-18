@@ -488,15 +488,30 @@ void Sandbox::setupFilesystem()
             throw std::runtime_error("Failed to bind mount " + source.string() + " to " + target.string() + ": " + std::string(strerror(errno)));
     };
 
+    auto bindFile = [](const fs::path &source, const fs::path &target)
+    {
+        if (!fs::exists(source))
+            return;
+
+        fs::create_directories(target.parent_path());
+        std::ofstream(target).close();
+        if (mount(source.c_str(), target.c_str(), nullptr, MS_BIND, nullptr) == -1)
+            throw std::runtime_error("Failed to bind mount " + source.string() + " to " + target.string() + ": " + std::string(strerror(errno)));
+    };
+
     bindDirectory("/bin", fs::path(ROOTFS_PATH) / "bin");
     bindDirectory("/usr/bin", fs::path(ROOTFS_PATH) / "usr/bin");
     bindDirectory("/usr", fs::path(ROOTFS_PATH) / "usr");
     bindDirectory("/lib", fs::path(ROOTFS_PATH) / "lib");
     bindDirectory("/lib64", fs::path(ROOTFS_PATH) / "lib64");
+    bindDirectory("/lib/x86_64-linux-gnu", fs::path(ROOTFS_PATH) / "lib/x86_64-linux-gnu");
     bindDirectory("/sbin", fs::path(ROOTFS_PATH) / "sbin");
     bindDirectory("/usr/sbin", fs::path(ROOTFS_PATH) / "usr/sbin");
     bindDirectory("/usr/lib", fs::path(ROOTFS_PATH) / "usr/lib");
     bindDirectory("/usr/lib64", fs::path(ROOTFS_PATH) / "usr/lib64");
+    bindDirectory("/usr/lib/x86_64-linux-gnu", fs::path(ROOTFS_PATH) / "usr/lib/x86_64-linux-gnu");
+    bindFile("/etc/hosts", fs::path(ROOTFS_PATH) / "etc/hosts");
+    bindFile("/etc/nsswitch.conf", fs::path(ROOTFS_PATH) / "etc/nsswitch.conf");
 
     // chdir BEFORE chroot: chroot() alone only changes what "/" resolves to,
     // it does not move the process's cwd. If we chroot'd without first
