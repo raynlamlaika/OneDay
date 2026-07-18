@@ -40,6 +40,8 @@ public:
     void setMemoryLimit(std::string limit) { memoryLimit = limit; }
     void setHostname(std::string name) { hostname = name; }
     void run(std::string cpuLimit, std::string memoryLimit, std::string hostname);
+    void setupHostNetworking(pid_t childPid);
+    int syncPipeReadFd;
     Sandbox();
     ~Sandbox();
     Sandbox (const Sandbox &other);
