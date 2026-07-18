@@ -696,12 +696,3 @@ void Sandbox::run(std::string cpuLimit, std::string memoryLimit, std::string hos
     cleanup();
     delete[] stack;
 }
-
-
-
-/*
-to do:
-understand the clone flag chroot the network hndling 
-mounting the filesystem
-
-*/
