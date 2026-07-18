@@ -109,8 +109,13 @@ void Sandbox::setupFilesystem()
 {
     namespace fs = std::filesystem;
  
-    if (!fs::exists(ROOTFS_PATH) || !fs::is_directory(ROOTFS_PATH))
-        throw std::runtime_error("Rootfs directory does not exist: " ROOTFS_PATH);
+    if (fs::exists(ROOTFS_PATH) && !fs::is_directory(ROOTFS_PATH))
+        throw std::runtime_error("Rootfs path exists but is not a directory: " ROOTFS_PATH);
+
+    if (!fs::exists(ROOTFS_PATH))
+        fs::create_directories(ROOTFS_PATH);
+
+    fs::create_directories(fs::path(ROOTFS_PATH) / "tmp/sandbox_mount/proc/self");
  
     // chdir BEFORE chroot: chroot() alone only changes what "/" resolves to,
     // it does not move the process's cwd. If we chroot'd without first
