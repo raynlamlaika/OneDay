@@ -50,9 +50,10 @@ private:
     std::string cpuLimit;
     std::string memoryLimit;
     std::string hostname;
+    bool tmpfsMounted;
 
     static void createCgroup(std::string cpuLimit, std::string memoryLimit);
-    static void setupNamespaces(t_NamespaceConfig config, std::string hostname);
+    static bool setupNamespaces(t_NamespaceConfig config, std::string hostname);
 
     void setupFilesystem();
     void setupNetwork();
