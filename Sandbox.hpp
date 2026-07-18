@@ -30,6 +30,12 @@ typedef struct t_NamespaceConfig
 class Sandbox
 {
 public:
+    std::string getCpuLimit() const { return cpuLimit; }
+    std::string getMemoryLimit() const { return memoryLimit; }
+    std::string getHostname() const { return hostname; }
+    void setCpuLimit(std::string limit) { cpuLimit = limit; }
+    void setMemoryLimit(std::string limit) { memoryLimit = limit; }
+    void setHostname(std::string name) { hostname = name; }
     void run(std::string cpuLimit, std::string memoryLimit, std::string hostname);
     Sandbox();
     ~Sandbox();
@@ -39,9 +45,11 @@ public:
    static int child(void *arg);
 
 private:
+    std::string cpuLimit;
+    std::string memoryLimit;
+    std::string hostname;
 
-
-    void createCgroup(std::string cpuLimit, std::string memoryLimit);
+    static void createCgroup(std::string cpuLimit, std::string memoryLimit);
     void setupNamespaces(t_NamespaceConfig config, std::string hostname);
 
     void setupFilesystem();

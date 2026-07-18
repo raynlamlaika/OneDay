@@ -173,23 +173,23 @@ void Sandbox::cleanup()
 }
 
 
-static std::string getHostname()
-{
-    char hostname[256] = {0};
+// static std::string getHostname()
+// {
+//     char hostname[256] = {0};
 
-    if (gethostname(hostname, sizeof(hostname)) == 0)
-        return hostname;
-    return "unknown";
-}
+//     if (gethostname(hostname, sizeof(hostname)) == 0)
+//         return hostname;
+//     return "unknown";
+// }
 
-static void printMetadata()
-{
-    std::cout << "\n========== SANDBOX METADATA ==========" << "\n";
-    std::cout << "Process: pid=" << getpid()
-              << " ppid=" << getppid() << '\n';
-    std::cout << "Hostname: " << getHostname() << '\n';
-    std::cout << "Namespaces: mount pid net uts ipc user cgroup" << '\n';
-}
+// static void printMetadata()
+// {
+//     std::cout << "\n========== SANDBOX METADATA ==========" << "\n";
+//     std::cout << "Process: pid=" << getpid()
+//               << " ppid=" << getppid() << '\n';
+//     std::cout << "Hostname: " << getHostname() << '\n';
+//     std::cout << "Namespaces: mount pid net uts ipc user cgroup" << '\n';
+// }
 
 int Sandbox::child(void *arg)
 {
@@ -197,37 +197,38 @@ int Sandbox::child(void *arg)
 
     std::cout << "Child process started." << std::endl;
     (void) sandbox; // Suppress unused variable warning
-
+    // std::string cpuLimit = sandbox.getCpuLimit(); // Assuming you have a method to get CPU limit
+    // std::string memoryLimit = sandbox.getMemoryLimit(); // Assuming you have a method to get memory limit
+    // std::string hostname = sandbox.getHostname(); // Assuming you have a method to get hostname
+    createCgroup(sandbox->getCpuLimit(), sandbox->getMemoryLimit());
     // Now you can access members
     // sandbox->setupFilesystem();
     // sandbox->setupNetwork();
+    // first setup the cgroup, then setup the namespaces, then setup the filesystem, then setup the network, then setup the hostname, then setup the security, then execute the program, then cleanup.
+
 
     return 0;
 }
 void Sandbox::run(std::string cpuLimit, std::string memoryLimit, std::string hostname)
 {
-    constexpr int STACK_SIZE = 1024 * 1024;
-    char *stack = new char[STACK_SIZE];
-    int flags = CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWNET | CLONE_NEWIPC | CLONE_NEWPID | SIGCHLD;
-    pid_t pid = clone(
-        Sandbox::child,
-        stack + STACK_SIZE,
-        flags,
-        this);
     (void)cpuLimit; // Suppress unused variable warning
     (void)memoryLimit; // Suppress unused variable warning
     (void)hostname; // Suppress unused variable warning
+    constexpr int STACK_SIZE = 1024 * 1024;
+    char *stack = new char[STACK_SIZE];
+    int flags = CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWNET | CLONE_NEWIPC | CLONE_NEWPID | SIGCHLD;
+    pid_t pid = clone( Sandbox::child, stack + STACK_SIZE, flags, this);
     if (pid == -1)
     {
         std::cerr << "clone() failed: " << strerror(errno) << std::endl;
         throw std::runtime_error("clone failed");
     }
-    else if (pid == 0)
-    {
+        // else if (pid == 0)
+        // {
         // // Child process
         // try
         // {
-            printMetadata();
+            // printMetadata();
         //     createCgroup(cpuLimit, memoryLimit);
         //     t_NamespaceConfig nsConfig = 
         //     {// explaination of every flag : 
@@ -255,12 +256,9 @@ void Sandbox::run(std::string cpuLimit, std::string memoryLimit, std::string hos
         //     std::cerr << "Error: " << e.what() << std::endl;
         //     _exit(0);
         // }
-        std::cout << "Child process running in sandboxed environment." << std::endl;
-    }
-    else
-    {
-        // Parent process
-        int status;
-        waitpid(pid, &status, 0);
-    }
+    //     std::cout << "Child process running in sandboxed environment." << std::endl;
+    // }
+
+    int status;
+    waitpid(pid, &status, 0);
 }

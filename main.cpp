@@ -23,7 +23,10 @@ int main(int ac, char **av)
         std::cout << "Hostname: " << oneDayObj.getHostname() << std::endl;
 
         Sandbox sandboxObj;
-        sandboxObj.run(std::to_string(oneDayObj.getCpu()), std::to_string(oneDayObj.getMemory()), oneDayObj.getHostname());
+        sandboxObj.setCpuLimit(std::to_string(oneDayObj.getCpu()));
+        sandboxObj.setMemoryLimit(std::to_string(oneDayObj.getMemory()));
+        sandboxObj.setHostname(oneDayObj.getHostname());
+        sandboxObj.run(sandboxObj.getCpuLimit(), sandboxObj.getMemoryLimit(), sandboxObj.getHostname());
     }
     catch (const std::exception &e)
     {
