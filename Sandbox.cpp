@@ -88,6 +88,7 @@ bool Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
     {
         throw std::runtime_error("Failed to unshare namespaces.");
     }
+    std::filesystem::create_directories(MOUNT_FILE);
     if (config.mount && mount(nullptr, "/", nullptr, MS_REC | MS_PRIVATE, nullptr) == -1)
         perror("mount private root");
     if (sethostname(hostname.c_str(), hostname.length()) == -1)
