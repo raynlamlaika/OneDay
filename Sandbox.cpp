@@ -131,6 +131,7 @@ void Sandbox::setupFilesystem()
     fs::create_directories(fs::path(ROOTFS_PATH) / "root");
     fs::create_directories(fs::path(ROOTFS_PATH) / "home");
     fs::create_directories(fs::path(ROOTFS_PATH) / "tmp");
+    fs::create_directories(fs::path(ROOTFS_PATH) / "etc");
 
     auto bindDirectory = [](const fs::path &source, const fs::path &target)
     {
@@ -139,6 +140,17 @@ void Sandbox::setupFilesystem()
 
         fs::create_directories(target);
         if (mount(source.c_str(), target.c_str(), nullptr, MS_BIND | MS_REC, nullptr) == -1)
+            throw std::runtime_error("Failed to bind mount " + source.string() + " to " + target.string() + ": " + std::string(strerror(errno)));
+    };
+
+    auto bindFile = [](const fs::path &source, const fs::path &target)
+    {
+        if (!fs::exists(source))
+            return;
+
+        fs::create_directories(target.parent_path());
+        std::ofstream(target).close();
+        if (mount(source.c_str(), target.c_str(), nullptr, MS_BIND, nullptr) == -1)
             throw std::runtime_error("Failed to bind mount " + source.string() + " to " + target.string() + ": " + std::string(strerror(errno)));
     };
 
@@ -151,6 +163,9 @@ void Sandbox::setupFilesystem()
     bindDirectory("/usr/sbin", fs::path(ROOTFS_PATH) / "usr/sbin");
     bindDirectory("/usr/lib", fs::path(ROOTFS_PATH) / "usr/lib");
     bindDirectory("/usr/lib64", fs::path(ROOTFS_PATH) / "usr/lib64");
+    bindFile("/run/systemd/resolve/resolv.conf", fs::path(ROOTFS_PATH) / "etc/resolv.conf");
+    bindFile("/etc/hosts", fs::path(ROOTFS_PATH) / "etc/hosts");
+    bindFile("/etc/nsswitch.conf", fs::path(ROOTFS_PATH) / "etc/nsswitch.conf");
  
     // chdir BEFORE chroot: chroot() alone only changes what "/" resolves to,
     // it does not move the process's cwd. If we chroot'd without first
