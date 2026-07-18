@@ -38,9 +38,10 @@ void Sandbox::createCgroup(std::string cpuLimit, std::string memoryLimit)
         }
     }
     std::ofstream memory(cgroupPath / "memory.max");
-    memory << memoryLimit;
+    memory << (std::stoull(memoryLimit) * 1024ULL * 1024ULL);
+
     std::ofstream cpu(cgroupPath / "cpu.max");
-    cpu << cpuLimit;
+    cpu << (std::stoull(cpuLimit) * 1000ULL) << " 100000";
 }
 
 bool Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
