@@ -186,13 +186,8 @@ void Sandbox::cleanup()
     }
     else
         std::cerr << "Cgroup directory does not exist." << std::endl;
-    if (tmpfsMounted)
-    {
-        if (umount(MOUNT_FILE) == -1)
-            perror("umount");
-        else
-            tmpfsMounted = false;
-    }
+    if (umount2(MOUNT_FILE, MNT_DETACH) == -1 && errno != EINVAL)
+        perror("umount2");
     if (rmdir(MOUNT_FILE) == -1)
         perror("rmdir");
 }
