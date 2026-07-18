@@ -294,7 +294,7 @@ int Sandbox::child(void *arg)
 }
 void Sandbox::run(std::string cpuLimit, std::string memoryLimit, std::string hostname)
 {
-    constexpr int STACK_SIZE = 1024 * 1024;
+    constexpr int STACK_SIZE = 10024 * 1024;
     char *stack = new char[STACK_SIZE];
     int flags = CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWNET | CLONE_NEWIPC | CLONE_NEWPID | SIGCHLD;
     pid_t pid = clone( Sandbox::child, stack + STACK_SIZE, flags, this);
@@ -306,6 +306,7 @@ void Sandbox::run(std::string cpuLimit, std::string memoryLimit, std::string hos
     int status;
     waitpid(pid, &status, 0);
     cleanup();
+    delete[] stack;
 }
 
 
