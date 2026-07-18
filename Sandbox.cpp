@@ -621,7 +621,7 @@ int Sandbox::child(void *arg)
     {// explaination of every flag : 
         true,  // mount: create a new mount namespace
         true,  // pid: informational only, see setupNamespaces() note
-        true,  // net: create a new network namespace
+        false, // net: clone() already created the network namespace
         true,  // uts: create a new UTS namespace
         false, // ipc: create a new IPC namespace
         false, // user: create a new user namespace
