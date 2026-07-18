@@ -231,9 +231,6 @@ int Sandbox::child(void *arg)
 }
 void Sandbox::run(std::string cpuLimit, std::string memoryLimit, std::string hostname)
 {
-    (void)cpuLimit; // Suppress unused variable warning
-    (void)memoryLimit; // Suppress unused variable warning
-    (void)hostname; // Suppress unused variable warning
     constexpr int STACK_SIZE = 1024 * 1024;
     char *stack = new char[STACK_SIZE];
     int flags = CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWNET | CLONE_NEWIPC | CLONE_NEWPID | SIGCHLD;
