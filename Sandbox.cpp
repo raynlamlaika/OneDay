@@ -119,6 +119,9 @@ void Sandbox::setupFilesystem()
 
     fs::create_directories(fs::path(ROOTFS_PATH) / "tmp/sandbox_mount/proc/self");
     fs::create_directories(fs::path(ROOTFS_PATH) / "proc");
+    fs::create_directories(fs::path(ROOTFS_PATH) / "root");
+    fs::create_directories(fs::path(ROOTFS_PATH) / "home");
+    fs::create_directories(fs::path(ROOTFS_PATH) / "tmp");
 
     auto bindDirectory = [](const fs::path &source, const fs::path &target)
     {
@@ -181,6 +184,8 @@ void Sandbox::setupSecurity()
 
 void Sandbox::executeProgram()
 {
+    setenv("HOME", "/root", 1);
+    setenv("TERM", "xterm-256color", 1);
     execl("/usr/bin/bash", "bash", static_cast<char *>(nullptr));
     throw std::runtime_error("exec bash failed: " + std::string(strerror(errno)));
 }
