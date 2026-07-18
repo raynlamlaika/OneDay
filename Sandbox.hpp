@@ -10,9 +10,11 @@
 #include <sys/wait.h>  // waitpid, pid_t
 #include <unistd.h>
 #include <iostream>
-#include <sched.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <cstring>
+
+#define FILE_PATH "/tmp/sandbox_mount/proc/self/cgroup"
 typedef struct t_NamespaceConfig
 {
     bool mount;
@@ -53,15 +55,12 @@ private:
     static void setupNamespaces(t_NamespaceConfig config, std::string hostname);
 
     void setupFilesystem();
-
     void setupNetwork();
-
     void setupHostname();
-
     void setupSecurity();
-
     void executeProgram();
 
+    
     void cleanup();
 };
 

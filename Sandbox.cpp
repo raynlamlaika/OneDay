@@ -78,6 +78,8 @@ void Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
         flags |= CLONE_NEWUSER;
     if (config.cgroup)
         flags |= CLONE_NEWCGROUP;
+    if (flags == 0)
+        throw std::runtime_error("No namespaces specified for unshare.");
     
 
     if (unshare(flags) == -1)// unshare it will create a new namespace for the current process and its children.
@@ -86,14 +88,14 @@ void Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
     }
     if (sethostname(hostname.c_str(), hostname.length()) == -1)
         perror("sethostname");
-    if (mount("tmpfs", MOUNT_FILE, "tmpfs", 0, nullptr) == -1)
+    if (mount("tmpfs", MOUNT_FILE, "tmpfs",  MS_REC | MS_PRIVATE , nullptr) == -1)
         perror("mount");
 
     // system("findmnt -o TARGET,PROPAGATION");
 
     // pause();
 }
-#include <cstring>
+
 void Sandbox::setupFilesystem()
 {
     namespace fs = std::filesystem;
@@ -115,6 +117,10 @@ void Sandbox::setupFilesystem()
     // for whatever runs next (e.g. execve).
     if (chdir("/") == -1)
         throw std::runtime_error("chdir to / after chroot failed: " + std::string(strerror(errno)));
+    
+    std::ofstream procs(FILE_PATH);
+    procs << getpid();
+
 }
 
 void Sandbox::setupNetwork()
@@ -212,6 +218,9 @@ int Sandbox::child(void *arg)
     // std::string hostname = sandbox.getHostname(); // Assuming you have a method to get hostname
     createCgroup(sandbox->getCpuLimit(), sandbox->getMemoryLimit());
     setupNamespaces(nsConfig, sandbox->getHostname());
+    sethostname("ProcLeParent", strlen("ProcLeParent"));
+    sandbox->setupNetwork();
+    sandbox->setupFilesystem();
     // Now you can access members
     // sandbox->setupFilesystem();
     // sandbox->setupNetwork();
@@ -274,3 +283,12 @@ void Sandbox::run(std::string cpuLimit, std::string memoryLimit, std::string hos
     waitpid(pid, &status, 0);
     cleanup();
 }
+
+
+
+/*
+to do:
+understand the clone flag chroot the network hndling 
+mounting the filesystem
+
+*/
