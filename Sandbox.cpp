@@ -83,8 +83,8 @@ bool Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
         flags |= CLONE_NEWNET;
     if (config.ipc)
         flags |= CLONE_NEWIPC;
-    if (config.pid)
-        flags |= CLONE_NEWPID;
+    // if (config.pid)
+    //     flags |= CLONE_NEWPID;
     if (config.user)
         flags |= CLONE_NEWUSER;
     if (config.cgroup)
