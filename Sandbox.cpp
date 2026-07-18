@@ -47,6 +47,10 @@ void Sandbox::createCgroup(std::string cpuLimit, std::string memoryLimit)
     if (!procs)
         throw std::runtime_error("Failed to open cgroup.procs.");
     procs << getpid();
+
+    std::ofstream pidsMax(cgroupPath / "pids.max");
+    if (pidsMax)
+        pidsMax << "max";
 }
 
 bool Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
@@ -192,6 +196,13 @@ void Sandbox::setupSecurity()
 
 void Sandbox::executeProgram()
 {
+    struct rlimit limit = {RLIM_INFINITY, RLIM_INFINITY};
+    if (setrlimit(RLIMIT_NPROC, &limit) == -1)
+        perror("setrlimit RLIMIT_NPROC");
+    if (setrlimit(RLIMIT_AS, &limit) == -1)
+        perror("setrlimit RLIMIT_AS");
+    if (setrlimit(RLIMIT_STACK, &limit) == -1)
+        perror("setrlimit RLIMIT_STACK");
     setenv("HOME", "/root", 1);
     setenv("TERM", "xterm-256color", 1);
     setenv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", 1);

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <sys/mount.h>
+#include <sys/resource.h>
 #include <sched.h>     // CLONE_* flags
 #include <sys/wait.h>  // waitpid, pid_t
 #include <unistd.h>
