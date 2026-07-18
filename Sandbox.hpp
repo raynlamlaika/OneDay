@@ -50,7 +50,7 @@ private:
     std::string hostname;
 
     static void createCgroup(std::string cpuLimit, std::string memoryLimit);
-    void setupNamespaces(t_NamespaceConfig config, std::string hostname);
+    static void setupNamespaces(t_NamespaceConfig config, std::string hostname);
 
     void setupFilesystem();
 

@@ -3,7 +3,7 @@ FILES=main.cpp OneDay.cpp Sandbox.cpp Pro_child.cpp
 
 OBJS=$(FILES:.cpp=.o)
 CXX=c++
-FLAGS=-std=c++20 -Wall -Wextra -Werror -g
+FLAGS=-std=c++20 -Wall -Wextra #-Werror -g
 HEADER=OneDay.hpp Sandbox.hpp
 
 

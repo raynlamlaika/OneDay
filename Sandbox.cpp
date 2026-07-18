@@ -173,14 +173,14 @@ void Sandbox::cleanup()
 }
 
 
-// static std::string getHostname()
-// {
-//     char hostname[256] = {0};
+static std::string getHostname()
+{
+    char hostname[256] = {0};
 
-//     if (gethostname(hostname, sizeof(hostname)) == 0)
-//         return hostname;
-//     return "unknown";
-// }
+    if (gethostname(hostname, sizeof(hostname)) == 0)
+        return hostname;
+    return "unknown";
+}
 
 // static void printMetadata()
 // {
@@ -194,6 +194,16 @@ void Sandbox::cleanup()
 int Sandbox::child(void *arg)
 {
     Sandbox *sandbox = static_cast<Sandbox *>(arg);
+    t_NamespaceConfig nsConfig = 
+    {// explaination of every flag : 
+        true,  // mount: create a new mount namespace
+        true,  // pid: create a new PID namespace
+        true,  // net: create a new network namespace
+        true,  // uts: create a new UTS namespace
+        false, // ipc: create a new IPC namespace
+        false, // user: create a new user namespace
+        false  // cgroup: create a new cgroup namespace
+    };
 
     std::cout << "Child process started." << std::endl;
     (void) sandbox; // Suppress unused variable warning
@@ -201,6 +211,7 @@ int Sandbox::child(void *arg)
     // std::string memoryLimit = sandbox.getMemoryLimit(); // Assuming you have a method to get memory limit
     // std::string hostname = sandbox.getHostname(); // Assuming you have a method to get hostname
     createCgroup(sandbox->getCpuLimit(), sandbox->getMemoryLimit());
+    setupNamespaces(nsConfig, sandbox->getHostname());
     // Now you can access members
     // sandbox->setupFilesystem();
     // sandbox->setupNetwork();
