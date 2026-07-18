@@ -42,6 +42,11 @@ void Sandbox::createCgroup(std::string cpuLimit, std::string memoryLimit)
 
     std::ofstream cpu(cgroupPath / "cpu.max");
     cpu << (std::stoull(cpuLimit) * 1000ULL) << " 100000";
+
+    std::ofstream procs(cgroupPath / "cgroup.procs");
+    if (!procs)
+        throw std::runtime_error("Failed to open cgroup.procs.");
+    procs << getpid();
 }
 
 bool Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
