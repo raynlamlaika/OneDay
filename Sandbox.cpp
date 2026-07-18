@@ -87,6 +87,8 @@ bool Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
     {
         throw std::runtime_error("Failed to unshare namespaces.");
     }
+    if (config.mount && mount(nullptr, "/", nullptr, MS_REC | MS_PRIVATE, nullptr) == -1)
+        perror("mount private root");
     if (sethostname(hostname.c_str(), hostname.length()) == -1)
         perror("sethostname");
     bool tmpfsMounted = false;
@@ -95,8 +97,6 @@ bool Sandbox::setupNamespaces(t_NamespaceConfig config, std::string hostname)
     else
     {
         tmpfsMounted = true;
-        if (mount(nullptr, MOUNT_FILE, nullptr, MS_REC | MS_PRIVATE, nullptr) == -1)
-            perror("mount propagation");
     }
 
     // system("findmnt -o TARGET,PROPAGATION");
