@@ -450,13 +450,32 @@ void Sandbox::setupFilesystem()
     fs::create_directories(fs::path(ROOTFS_PATH) / "tmp");
     fs::create_directories(fs::path(ROOTFS_PATH) / "etc");
 
-    // FIX: /etc/resolv.conf never existed inside the chroot, so DNS
-    // resolution had nothing to read at all. Has to be written before
-    // chroot, since it's addressed via the host-visible ROOTFS_PATH here.
+    // Prefer a real upstream resolver list over a local stub resolver.
+    // Debian 12 commonly points /etc/resolv.conf at 127.0.0.53, which is
+    // not reachable from the sandbox network namespace.
     {
-        std::ofstream resolv(fs::path(ROOTFS_PATH) / "etc/resolv.conf");
-        resolv << "nameserver 8.8.8.8\n";
-        resolv << "nameserver 1.1.1.1\n";
+        std::ofstream sandboxResolv(fs::path(ROOTFS_PATH) / "etc/resolv.conf");
+
+        auto copyResolverFile = [&](const fs::path &source)
+        {
+            std::ifstream input(source);
+            if (!input)
+                return false;
+
+            std::string contents((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+            if (contents.find("127.0.0.53") != std::string::npos)
+                return false;
+
+            sandboxResolv << contents;
+            return true;
+        };
+
+        if (!copyResolverFile("/run/systemd/resolve/resolv.conf") &&
+            !copyResolverFile("/etc/resolv.conf"))
+        {
+            sandboxResolv << "nameserver 8.8.8.8\n";
+            sandboxResolv << "nameserver 1.1.1.1\n";
+        }
     }
 
     auto bindDirectory = [](const fs::path &source, const fs::path &target)
@@ -530,6 +549,7 @@ void Sandbox::setupHostNetworking(pid_t childPid)
             throw std::runtime_error("host networking command failed: " + cmd);
     };
 
+    system("ip link del veth-host 2>/dev/null");
     run("ip link add veth-host type veth peer name veth-sandbox");
     run("ip link set veth-sandbox netns " + pidStr);
     run("ip addr add 10.200.1.1/24 dev veth-host");
@@ -679,6 +699,7 @@ void Sandbox::run(std::string cpuLimit, std::string memoryLimit, std::string hos
 
     // FIX: now that the child (and its fresh netns) exists, wire up the
     // veth pair + NAT from the host side, then let the child proceed.
+    int status;
     try
     {
         setupHostNetworking(pid);
@@ -686,12 +707,15 @@ void Sandbox::run(std::string cpuLimit, std::string memoryLimit, std::string hos
     catch (const std::exception &e)
     {
         std::cerr << "Host networking setup failed: " << e.what() << std::endl;
+        kill(pid, SIGKILL);
+        waitpid(pid, &status, 0);
+        delete[] stack;
+        throw;
     }
     if (write(syncPipe[1], "1", 1) != 1)
         perror("sync pipe write");
     close(syncPipe[1]);
 
-    int status;
     waitpid(pid, &status, 0);
     cleanup();
     delete[] stack;
