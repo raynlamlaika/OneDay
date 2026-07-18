@@ -139,11 +139,14 @@ void Sandbox::setupFilesystem()
     };
 
     bindDirectory("/bin", fs::path(ROOTFS_PATH) / "bin");
+    bindDirectory("/usr/bin", fs::path(ROOTFS_PATH) / "usr/bin");
     bindDirectory("/usr", fs::path(ROOTFS_PATH) / "usr");
     bindDirectory("/lib", fs::path(ROOTFS_PATH) / "lib");
     bindDirectory("/lib64", fs::path(ROOTFS_PATH) / "lib64");
     bindDirectory("/sbin", fs::path(ROOTFS_PATH) / "sbin");
     bindDirectory("/usr/sbin", fs::path(ROOTFS_PATH) / "usr/sbin");
+    bindDirectory("/usr/lib", fs::path(ROOTFS_PATH) / "usr/lib");
+    bindDirectory("/usr/lib64", fs::path(ROOTFS_PATH) / "usr/lib64");
  
     // chdir BEFORE chroot: chroot() alone only changes what "/" resolves to,
     // it does not move the process's cwd. If we chroot'd without first
@@ -191,6 +194,7 @@ void Sandbox::executeProgram()
 {
     setenv("HOME", "/root", 1);
     setenv("TERM", "xterm-256color", 1);
+    setenv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", 1);
     execl("/usr/bin/bash", "bash", static_cast<char *>(nullptr));
     throw std::runtime_error("exec bash failed: " + std::string(strerror(errno)));
 }
