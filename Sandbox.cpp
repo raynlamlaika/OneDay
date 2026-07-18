@@ -116,6 +116,24 @@ void Sandbox::setupFilesystem()
         fs::create_directories(ROOTFS_PATH);
 
     fs::create_directories(fs::path(ROOTFS_PATH) / "tmp/sandbox_mount/proc/self");
+    fs::create_directories(fs::path(ROOTFS_PATH) / "proc");
+
+    auto bindDirectory = [](const fs::path &source, const fs::path &target)
+    {
+        if (!fs::exists(source))
+            return;
+
+        fs::create_directories(target);
+        if (mount(source.c_str(), target.c_str(), nullptr, MS_BIND | MS_REC, nullptr) == -1)
+            throw std::runtime_error("Failed to bind mount " + source.string() + " to " + target.string() + ": " + std::string(strerror(errno)));
+    };
+
+    bindDirectory("/bin", fs::path(ROOTFS_PATH) / "bin");
+    bindDirectory("/usr", fs::path(ROOTFS_PATH) / "usr");
+    bindDirectory("/lib", fs::path(ROOTFS_PATH) / "lib");
+    bindDirectory("/lib64", fs::path(ROOTFS_PATH) / "lib64");
+    bindDirectory("/sbin", fs::path(ROOTFS_PATH) / "sbin");
+    bindDirectory("/usr/sbin", fs::path(ROOTFS_PATH) / "usr/sbin");
  
     // chdir BEFORE chroot: chroot() alone only changes what "/" resolves to,
     // it does not move the process's cwd. If we chroot'd without first
@@ -131,6 +149,9 @@ void Sandbox::setupFilesystem()
     // for whatever runs next (e.g. execve).
     if (chdir("/") == -1)
         throw std::runtime_error("chdir to / after chroot failed: " + std::string(strerror(errno)));
+
+    if (mount("proc", "/proc", "proc", 0, nullptr) == -1)
+        throw std::runtime_error("mount proc failed: " + std::string(strerror(errno)));
     
     std::ofstream procs(FILE_PATH);
     procs << getpid();
@@ -142,10 +163,10 @@ void Sandbox::setupNetwork()
     // We are already inside a new network namespace.
 
     // 1. Bring up loopback.
-    system("ip link set lo up");
+    system("/usr/sbin/ip link set lo up");
 
     // 2. Print interfaces.
-    system("ip link");
+    system("/usr/sbin/ip link");
 }
 
 void Sandbox::setupHostname()
@@ -158,6 +179,8 @@ void Sandbox::setupSecurity()
 
 void Sandbox::executeProgram()
 {
+    execl("/usr/bin/bash", "bash", static_cast<char *>(nullptr));
+    throw std::runtime_error("exec bash failed: " + std::string(strerror(errno)));
 }
 
 void Sandbox::cleanup()
@@ -231,8 +254,9 @@ int Sandbox::child(void *arg)
         createCgroup(sandbox->getCpuLimit(), sandbox->getMemoryLimit());
         sandbox->tmpfsMounted = setupNamespaces(nsConfig, sandbox->getHostname());
         sethostname("ProcLeParent", strlen("ProcLeParent"));
-        sandbox->setupNetwork();
         sandbox->setupFilesystem();
+        sandbox->setupNetwork();
+        sandbox->executeProgram();
         return 0;
     }
     catch (const std::exception &e)
