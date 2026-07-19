@@ -41,6 +41,8 @@ public:
     void setHostname(std::string name) { hostname = name; }
     void run(std::string cpuLimit, std::string memoryLimit, std::string hostname);
     void setupHostNetworking(pid_t childPid);
+    void setupHostname(std::string &hostname);
+
     int syncPipeReadFd;
     Sandbox();
     ~Sandbox();
